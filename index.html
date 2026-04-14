@@ -8,12 +8,169 @@
     <link rel="stylesheet" href="style.css">
 </head>
 
+
 <body>
     <main>
         <h1>Catchmaster</h1>
         <h2>Ga in het midden van het scherm staan</h2>
         <h2>Beweeg links en rechts om het spel te starten</h2>
     </main>
+    <!DOCTYPE html>
+    <html lang="en">
+
+    <div>Teachable Machine Image Model</div>
+    <button type="button" onclick="init()">Start</button>
+
+    <div id="webcam-container"></div>
+    <div id="label-container"></div>
+
+    <!-- Extra status (handig om te zien wat er gebeurt) -->
+    <div id="state-indicator"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+
+    <script type="text/javascript">
+
+        const URL = "./model/";
+
+        let model, webcam, labelContainer, maxPredictions;
+
+        /* ---------------------------
+           GAME STATE
+        --------------------------- */
+        let gameState = "idle"; // idle | playing | gameover
+        let wasOutOfView = false;
+
+        const CONFIDENCE_THRESHOLD = 0.6;
+
+        /* ---------------------------
+           INIT
+        --------------------------- */
+        async function init() {
+            const modelURL = URL + "model.json";
+            const metadataURL = URL + "metadata.json";
+
+            model = await tmImage.load(modelURL, metadataURL);
+            maxPredictions = model.getTotalClasses();
+
+            const flip = true;
+            webcam = new tmImage.Webcam(200, 200, flip);
+            await webcam.setup();
+            await webcam.play();
+
+            window.requestAnimationFrame(loop);
+
+            document.getElementById("webcam-container").appendChild(webcam.canvas);
+
+            labelContainer = document.getElementById("label-container");
+            for (let i = 0; i < maxPredictions; i++) {
+                labelContainer.appendChild(document.createElement("div"));
+            }
+
+            updateStateUI();
+        }
+
+        /* ---------------------------
+           LOOP
+        --------------------------- */
+        async function loop() {
+            webcam.update();
+            await predict();
+            window.requestAnimationFrame(loop);
+        }
+
+        /* ---------------------------
+           PREDICT
+        --------------------------- */
+        async function predict() {
+            const predictions = await model.predict(webcam.canvas);
+
+            // Toon voorspellingen (debug / feedback)
+            for (let i = 0; i < maxPredictions; i++) {
+                labelContainer.childNodes[i].innerHTML =
+                    predictions[i].className + ": " + predictions[i].probability.toFixed(2);
+            }
+
+            // Hoogste prediction zoeken
+            const highest = predictions.reduce((max, p) =>
+                p.probability > max.probability ? p : max
+            );
+
+            handleGameFlow(highest.className, highest.probability);
+        }
+
+        /* ---------------------------
+           GAME FLOW LOGIC
+        --------------------------- */
+        function handleGameFlow(label, confidence) {
+
+            const nobodyInView = confidence < CONFIDENCE_THRESHOLD;
+
+            /* -------- IDLE (START) -------- */
+            if (gameState === "idle") {
+
+                if (label === "Middle" && confidence >= CONFIDENCE_THRESHOLD) {
+                    startGame();
+                }
+            }
+
+            /* -------- PLAYING -------- */
+            else if (gameState === "playing") {
+                // Hier komt later je echte game-logica
+                // Left → speler links
+                // Right → speler rechts
+            }
+
+            /* -------- GAME OVER -------- */
+            else if (gameState === "gameover") {
+
+                if (nobodyInView) {
+                    wasOutOfView = true;
+                }
+
+                if (wasOutOfView && label === "Middle" && confidence >= CONFIDENCE_THRESHOLD) {
+                    resetToIdle();
+                }
+            }
+        }
+
+        /* ---------------------------
+           STATE CHANGES
+        --------------------------- */
+        function startGame() {
+            gameState = "playing";
+            wasOutOfView = false;
+            updateStateUI();
+
+            console.log("GAME STARTED");
+        }
+
+        function endGame() {
+            gameState = "gameover";
+            updateStateUI();
+
+            console.log("GAME OVER");
+        }
+
+        function resetToIdle() {
+            gameState = "idle";
+            wasOutOfView = false;
+            updateStateUI();
+
+            console.log("RESET TO IDLE");
+        }
+
+        /* ---------------------------
+           UI FEEDBACK
+        --------------------------- */
+        function updateStateUI() {
+            document.getElementById("state-indicator").innerText =
+                "Game state: " + gameState.toUpperCase();
+        }
+
+    </script>
 
 </body>
 
