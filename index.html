@@ -137,13 +137,20 @@
         /* ---------------------------
            STATE CHANGES
         --------------------------- */
+
         function startGame() {
             gameState = "playing";
             wasOutOfView = false;
+
+            timeLeft = 30;
+            updateTimerUI();
+
+            startGameTimer();
             updateStateUI();
 
             console.log("GAME STARTED");
         }
+
 
         function endGame() {
             gameState = "gameover";
@@ -169,6 +176,7 @@
         }
 
     </script>
+    <script src="script.js"></script>
 
 </body>
 
