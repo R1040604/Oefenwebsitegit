@@ -152,12 +152,16 @@
         }
 
 
+
         function endGame() {
+            clearInterval(gameTimer);
+
             gameState = "gameover";
             updateStateUI();
 
             console.log("GAME OVER");
         }
+
 
         function resetToIdle() {
             gameState = "idle";
