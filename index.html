@@ -139,7 +139,7 @@
         --------------------------- */
 
         function startGame() {
-            console.log("startGame() called");
+
             gameState = "playing";
             wasOutOfView = false;
 
@@ -152,6 +152,10 @@
             console.log("GAME STARTED");
         }
 
+
+        if (gameState === "idle" && label === "Middle" && confidence >= CONFIDENCE_THRESHOLD) {
+            startGame();
+        }
 
 
         function endGame() {
